@@ -1,6 +1,8 @@
 package app.xjtu.xjandview
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -21,6 +23,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import androidx.appcompat.app.AppCompatActivity
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.view.WindowInsetsCompat
 import java.io.IOException
 import java.net.InetSocketAddress
@@ -103,11 +106,35 @@ class MainActivity : AppCompatActivity() {
 
         setProxySelector(PROXY_ADDRESS, PROXY_PORT)
 //        setProxyForWebView(this, PROXY_ADDRESS, PROXY_PORT)
+        openCustomTabWithFallback(TARGET_URL)
 
-        webView = findViewById(R.id.webview)
-        configureWebView()
-        webView.loadUrl(TARGET_URL)
+//        webView = findViewById(R.id.webview)
+//        configureWebView()
+//        webView.loadUrl(TARGET_URL)
     }
+    private fun openCustomTabWithFallback(url: String) {
+        // Create a CustomTabsIntent Builder to configure settings
+        val customTabsIntentBuilder = CustomTabsIntent.Builder()
+        try {
+            // Optional: Set toolbar color, animations, etc.
+//            customTabsIntentBuilder.setToolbarColor(resources.getColor(android.R.color.holo_blue_bright, null))
+            customTabsIntentBuilder.setShowTitle(true)
+            customTabsIntentBuilder.setExitAnimations(this, android.R.anim.slide_in_left, android.R.anim.slide_out_right)
+            // Build the CustomTabsIntent object
+            val customTabsIntent = customTabsIntentBuilder.build()
+
+            // Launch the URL
+            customTabsIntent.launchUrl(this, Uri.parse(url))
+        } catch (e: Exception) {
+            // Fallback: Open in default external browser if Custom Tabs is unavailable
+            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            startActivity(browserIntent)
+
+        }
+
+
+    }
+
 
     private fun configureWebView() {
         val webSettings = webView.settings

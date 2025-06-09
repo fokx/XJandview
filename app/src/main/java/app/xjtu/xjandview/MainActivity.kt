@@ -22,11 +22,15 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowInsetsCompat
+import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.URL
 import java.io.InputStream
 import java.net.HttpURLConnection
+import java.net.ProxySelector
+import java.net.SocketAddress
+import java.net.URI
 
 class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
@@ -46,6 +50,24 @@ class MainActivity : AppCompatActivity() {
         System.setProperty("http.proxyPort", proxyHostPort.toString())
         System.setProperty("https.proxyHost", proxyHost)
         System.setProperty("https.proxyPort", proxyHostPort.toString())
+    }
+    fun setProxySelector(proxyAddress: String, proxyPort: Int) {
+        val proxy = Proxy(Proxy.Type.SOCKS, InetSocketAddress(proxyAddress, proxyPort))
+        ProxySelector.setDefault(object : ProxySelector() {
+            override fun select(uri: URI?): List<Proxy> {
+                // Apply proxy only for HTTP/HTTPS schemes
+                return if (uri?.scheme == "http" || uri?.scheme == "https") {
+                    listOf(proxy)
+                } else {
+                    listOf(Proxy.NO_PROXY)
+                }
+            }
+
+            override fun connectFailed(uri: URI?, socketAddress: SocketAddress?, ioe: IOException?) {
+                // Log the failure if needed
+                ioe?.printStackTrace()
+            }
+        })
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -79,7 +101,8 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
-        setProxyForWebView(this, PROXY_ADDRESS, PROXY_PORT)
+        setProxySelector(PROXY_ADDRESS, PROXY_PORT)
+//        setProxyForWebView(this, PROXY_ADDRESS, PROXY_PORT)
 
         webView = findViewById(R.id.webview)
         configureWebView()

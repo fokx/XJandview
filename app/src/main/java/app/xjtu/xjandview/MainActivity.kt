@@ -1,5 +1,6 @@
 package app.xjtu.xjandview
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,12 +13,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import app.xjtu.xjandview.ui.theme.XJandviewTheme
+import android.view.WindowInsets
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowInsetsCompat
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.URL
@@ -33,8 +36,36 @@ class MainActivity : AppCompatActivity() {
         private const val PROXY_PORT = 2080
 //        private const val PROXY_PORT = 4801
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        // Make sure the app layout respects edge-to-edge displays
+        window.decorView.setOnApplyWindowInsetsListener { view, windowInsets ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                // For Android R and above
+                val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+                // Adjust padding to compensate for system bars (status + navigation bars)
+                view.setPadding(
+                    insets.left,
+                    insets.top,
+                    insets.right,
+                    insets.bottom
+                )
+            } else {
+                // For Android Q and below (using deprecated fields as fallback)
+                val insets = WindowInsetsCompat.toWindowInsetsCompat(windowInsets).systemGestureInsets
+                view.setPadding(
+                    insets.left,
+                    insets.top,
+                    insets.right,
+                    insets.bottom
+                )
+            }
+
+            windowInsets
+        }
 
         setContentView(R.layout.activity_main)
 

@@ -28,10 +28,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
 
     companion object {
-        private const val TARGET_URL = "https://bgp.he.net"
+        private const val TARGET_URL = "https://myip.xjtu.app"
         private const val PROXY_ADDRESS = "127.0.0.1"
-//        private const val PROXY_PORT = 2080
-        private const val PROXY_PORT = 4848
+        private const val PROXY_PORT = 2080
+//        private const val PROXY_PORT = 4801
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +47,8 @@ class MainActivity : AppCompatActivity() {
         val webSettings = webView.settings
         webSettings.javaScriptEnabled = true
         webSettings.domStorageEnabled = true
+        webSettings.allowFileAccess = true
+        webSettings.allowContentAccess = true
 
         // Set custom WebViewClient to handle proxy
         webView.webViewClient = ProxyWebViewClient()
@@ -58,39 +60,34 @@ class MainActivity : AppCompatActivity() {
     private inner class ProxyWebViewClient : WebViewClient() {
         override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
             return try {
-                // Create proxy
                 val proxy = Proxy(Proxy.Type.SOCKS, InetSocketAddress(PROXY_ADDRESS, PROXY_PORT))
-
-                // Get URL
                 val url = URL(request.url.toString())
-
-                // Open connection with proxy
                 val connection = url.openConnection(proxy) as HttpURLConnection
 
-                // Set request method
                 connection.requestMethod = request.method
-
-                // Add headers
                 request.requestHeaders.forEach { (key, value) ->
                     connection.setRequestProperty(key, value)
                 }
 
-                // Connect
                 connection.connect()
-
-                // Get response
                 val inputStream = connection.inputStream
 
-                // Return the response
                 WebResourceResponse(
-                    connection.contentType,
-                    connection.contentEncoding,
+                    connection.contentType ?: "text/html",
+                    connection.contentEncoding ?: "utf-8",
                     inputStream
                 )
             } catch (e: Exception) {
                 e.printStackTrace()
                 super.shouldInterceptRequest(view, request)
             }
+        }
+    }
+    override fun onBackPressed() {
+        if (webView.canGoBack()) {
+            webView.goBack()
+        } else {
+            super.onBackPressed()
         }
     }
 }

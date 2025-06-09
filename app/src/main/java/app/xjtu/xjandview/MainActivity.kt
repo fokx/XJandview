@@ -1,5 +1,6 @@
 package app.xjtu.xjandview
 
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -31,12 +32,21 @@ class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
 
     companion object {
-        private const val TARGET_URL = "https://myip.xjtu.app"
+        private const val TARGET_URL = "https://bgp.he.net"
         private const val PROXY_ADDRESS = "127.0.0.1"
         private const val PROXY_PORT = 2080
 //        private const val PROXY_PORT = 4801
     }
+    fun setProxyForWebView(context: Context, proxyAddress: String, proxyPort: Int) {
+        val proxyHost = proxyAddress
+        val proxyHostPort = proxyPort
 
+        // Setting proxy via system properties
+        System.setProperty("http.proxyHost", proxyHost)
+        System.setProperty("http.proxyPort", proxyHostPort.toString())
+        System.setProperty("https.proxyHost", proxyHost)
+        System.setProperty("https.proxyPort", proxyHostPort.toString())
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -69,23 +79,25 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
+        setProxyForWebView(this, PROXY_ADDRESS, PROXY_PORT)
+
         webView = findViewById(R.id.webview)
         configureWebView()
+        webView.loadUrl(TARGET_URL)
     }
 
     private fun configureWebView() {
-        // Enable JavaScript
         val webSettings = webView.settings
         webSettings.javaScriptEnabled = true
         webSettings.domStorageEnabled = true
         webSettings.allowFileAccess = true
         webSettings.allowContentAccess = true
-
-        // Set custom WebViewClient to handle proxy
-        webView.webViewClient = ProxyWebViewClient()
-
-        // Load the target URL
-        webView.loadUrl(TARGET_URL)
+        webSettings.cacheMode = WebSettings.LOAD_DEFAULT
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            WebView.setWebContentsDebuggingEnabled(true)
+        }
+//        webView.webViewClient = WebViewClient()
+//        webView.webViewClient = ProxyWebViewClient()
     }
 
     private inner class ProxyWebViewClient : WebViewClient() {
@@ -113,7 +125,16 @@ class MainActivity : AppCompatActivity() {
                 super.shouldInterceptRequest(view, request)
             }
         }
+//        override fun onPageFinished(view: WebView?, url: String?) {
+//            super.onPageFinished(view, url)
+//            view?.evaluateJavascript("document.body.innerHTML;") { content ->
+//                // Debug: You can log the content to check if JS-rendered content is present
+//                println("Rendered Content: $content")
+//            }
+//        }
+
     }
+
     override fun onBackPressed() {
         if (webView.canGoBack()) {
             webView.goBack()

@@ -10,8 +10,8 @@ android {
 
     defaultConfig {
         applicationId "app.xjtu.xjandview"
-        minSdk 26
-        targetSdk 35
+        minSdk 26 // Android 8.0
+        targetSdk 35 // Android 15
         versionCode 1
         versionName "1.0"
 
